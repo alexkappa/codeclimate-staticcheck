@@ -1,0 +1,11 @@
+{
+  "name": "staticcheck",
+  "description": "",
+  "maintainer": {
+    "name": "Alex Kalyvitis",
+    "email": "alex.kalyvitis@yieldr.com"
+  },
+  "languages" : ["Go"],
+  "version": "v1.0.0",
+  "spec_version": "0.0.1"
+}

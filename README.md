@@ -1,2 +1,1 @@
-# codeclimate-staticcheck
-Code Climate Engine for staticcheck
+# Code Climate Engine for staticcheck

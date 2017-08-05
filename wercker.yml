@@ -1,0 +1,36 @@
+box: golang:1.8
+build:
+  steps:
+    - wercker/setup-go-workspace:
+        package-dir: github.com/alexkappa/codeclimate-staticcheck
+    - script:
+        name: go build
+        code: |
+          go build
+    - script:
+        name: go test
+        code: |
+          go test
+    - script:
+        name: copy files
+        code: |
+          cp codeclimate-staticcheck $WERCKER_OUTPUT_DIR/
+release:
+  box: alpine:3.4
+  steps:
+    - script:
+        name: copy files
+        code: |
+          cp $WERCKER_SOURCE_DIR/codeclimate-staticcheck /usr/local/bin/
+    - script:
+        name: add user
+        code: |
+          adduser -u 9000 -D app
+    - internal/docker-push:
+        author: Alex Kalyvitis
+        cmd: /usr/local/bin/codeclimate-staticcheck
+        registry: https://registry.hub.docker.com
+        repository: yieldr/codeclimate-staticcheck
+        user: app
+        volumes: /code
+        working-dir: /code
