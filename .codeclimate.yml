@@ -1,5 +1,7 @@
 ---
 engines:
+  staticcheck:
+    enabled: true
   # fixme:
   #   enabled: true
   # gofmt:
