@@ -16,7 +16,6 @@ build:
         code: |
           cp codeclimate-staticcheck $WERCKER_OUTPUT_DIR/
 release:
-  box: alpine:3.4
   steps:
     - script:
         name: copy files

@@ -1,86 +1,105 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"go/parser"
+	"go/token"
 	"os"
-	"runtime"
+	"path/filepath"
+	"strings"
 
 	"github.com/codeclimate/cc-engine-go/engine"
 	"golang.org/x/tools/go/loader"
-	"honnef.co/go/tools/lint/lintutil"
+	"honnef.co/go/tools/lint"
 	"honnef.co/go/tools/staticcheck"
 )
 
-var (
-	Version = "latest"
-
-	flagVersion bool
-)
-
-func init() {
-	flag.BoolVar(&flagVersion, "v", false, "print version and exit")
-	flag.Parse()
-}
-
 func main() {
-
-	if flagVersion {
-		fmt.Printf("codeclimate-staticcheck %s (%s_%s)\n", Version, runtime.GOOS, runtime.GOARCH)
-		os.Exit(0)
-	}
-
 	config, err := engine.LoadConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config: %s\n", err)
 		os.Exit(1)
 	}
 
-	// path, _ := os.Getwd()
-	path := "/code/"
+	rootPath := filepath.Join(os.Getenv("GOPATH"), "src", "app")
+	if engineConfig, ok := config["config"].(map[string]interface{}); ok {
+		if packageDir, ok := engineConfig["package_dir"].(string); ok {
+			rootPath = filepath.Join(os.Getenv("GOPATH"), "src", packageDir)
+		}
+	}
 
-	filenames, err := engine.GoFileWalk(path, engine.IncludePaths(path, config))
+	if _, err := os.Stat(rootPath); err != nil {
+		rootPathDir := filepath.Dir(rootPath)
+		err := os.MkdirAll(rootPathDir, 0744)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed creating package dir. %s\n", err)
+			os.Exit(1)
+		}
+		err = os.Symlink("/code", rootPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed creating symlink from package dir to /code. %s\n", err)
+			os.Exit(1)
+		}
+		os.Chdir(rootPath)
+	}
+
+	targetPath, err := filepath.EvalSymlinks(rootPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed evaluating $GOPATH symlink. %s\n", err)
+		os.Exit(1)
+	}
+
+	filenames, err := engine.GoFileWalk(targetPath, engine.IncludePaths(targetPath, config))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading files: %s\n", err)
 		os.Exit(1)
 	}
 
-	loader := &loader.Config{ParserMode: parser.ImportsOnly, Cwd: path}
-	loader.CreateFromFilenames(path, filenames...)
+	loader := &loader.Config{
+		ParserMode:  0,
+		Cwd:         targetPath,
+		AllowErrors: true,
+	}
+	loader.CreateFromFilenames(targetPath, filenames...)
 	program, err := loader.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading program: %s\n", err)
 		os.Exit(1)
 	}
 
-	var packages []string
-	for _, packageInfo := range program.InitialPackages() {
-		packages = append(packages, packageInfo.Pkg.Name())
-	}
-
 	checker := staticcheck.NewChecker()
-	problems, _, err := lintutil.Lint(checker, packages, nil)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error linting program: %s\n", err)
-		os.Exit(1)
-	}
+	linter := lint.Linter{Checker: checker}
+	problems := linter.Lint(program)
 
 	for _, problem := range problems {
-		position := program.Fset.Position(problem.Position)
+
 		issue := &engine.Issue{
 			Type:              "issue",
-			Check:             "Staticcheck" + problem.Text,
-			Description:       problem.Text,
+			Check:             check(problem.Text),
+			Description:       description(problem.Text),
 			RemediationPoints: 5000,
-			Location: &engine.Location{
-				Lines: &engine.LinesOnlyPosition{
-					Begin: position.Line,
-					End:   position.Line,
-				},
-			},
-			Categories: []string{"Style"},
+			Location:          location(program, problem.Position, rootPath),
+			Categories:        []string{"Style"},
 		}
+
 		engine.PrintIssue(issue)
+	}
+}
+
+func check(s string) string {
+	return "Staticcheck/" + strings.TrimRight(strings.Split(s, "(")[1], ")")
+}
+
+func description(s string) string {
+	return strings.Split(s, "(")[0]
+}
+
+func location(p *loader.Program, pos token.Pos, path string) *engine.Location {
+	position := p.Fset.Position(pos)
+	return &engine.Location{
+		Path: strings.SplitAfter(position.Filename, path)[1],
+		Lines: &engine.LinesOnlyPosition{
+			Begin: position.Line,
+			End:   position.Line,
+		},
 	}
 }

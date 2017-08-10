@@ -2,6 +2,8 @@
 engines:
   staticcheck:
     enabled: true
+    config:
+      package_dir: github.com/alexkappa/codeclimate-staticcheck
   # fixme:
   #   enabled: true
   # gofmt:
