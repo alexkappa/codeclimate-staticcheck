@@ -55,7 +55,7 @@ func main() {
 	}
 
 	loader := &loader.Config{
-		ParserMode:  0,
+		ParserMode:  0, // parser.ParseComments | DeclarationErrors,
 		Cwd:         targetPath,
 		AllowErrors: true,
 	}

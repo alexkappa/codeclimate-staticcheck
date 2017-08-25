@@ -13,6 +13,6 @@ ARCH ?= amd64
 build:
 	@CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -o bin/codeclimate-staticcheck-$(OS)-$(ARCH) $(BFLAGS) -ldflags $(LDFLAGS)
 
-image: build
+image:
 	@docker build -t $(IMAGE) .
 	@docker tag $(IMAGE):latest $(IMAGE):$(VERSION)
