@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alexkappa/codeclimate-staticcheck/fileutil"
 	"github.com/codeclimate/cc-engine-go/engine"
 	"golang.org/x/tools/go/loader"
 	"honnef.co/go/tools/lint"
@@ -20,46 +21,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	rootPath := filepath.Join(os.Getenv("GOPATH"), "src", "app")
+	rootPath := "/code"
+
+	pkgPath := filepath.Join(os.Getenv("GOPATH"), "src", "app")
 	if engineConfig, ok := config["config"].(map[string]interface{}); ok {
 		if packageDir, ok := engineConfig["package_dir"].(string); ok {
-			rootPath = filepath.Join(os.Getenv("GOPATH"), "src", packageDir)
+			pkgPath = filepath.Join(os.Getenv("GOPATH"), "src", packageDir)
 		}
 	}
 
-	if _, err := os.Stat(rootPath); err != nil {
-		rootPathDir := filepath.Dir(rootPath)
-		err := os.MkdirAll(rootPathDir, 0744)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed creating package dir. %s\n", err)
-			os.Exit(1)
-		}
-		err = os.Symlink("/code", rootPath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed creating symlink from package dir to /code. %s\n", err)
-			os.Exit(1)
-		}
-		os.Chdir(rootPath)
-	}
-
-	targetPath, err := filepath.EvalSymlinks(rootPath)
+	err = fileutil.CopyDir(pkgPath, rootPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed evaluating $GOPATH symlink. %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed copying dir to %q. %s\n", pkgPath, err)
 		os.Exit(1)
 	}
 
-	filenames, err := engine.GoFileWalk(targetPath, engine.IncludePaths(targetPath, config))
+	filenames, err := fileutil.GoFileWalk(pkgPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading files: %s\n", err)
 		os.Exit(1)
 	}
 
 	loader := &loader.Config{
-		ParserMode:  0, // parser.ParseComments | DeclarationErrors,
-		Cwd:         targetPath,
+		ParserMode:  0,
+		Cwd:         pkgPath,
 		AllowErrors: true,
 	}
-	loader.CreateFromFilenames(targetPath, filenames...)
+	loader.CreateFromFilenames(pkgPath, filenames...)
 	program, err := loader.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading program: %s\n", err)

@@ -16,3 +16,6 @@ build:
 image:
 	@docker build -t $(IMAGE) .
 	@docker tag $(IMAGE):latest $(IMAGE):$(VERSION)
+
+analyze:
+	@codeclimate analyze --dev
