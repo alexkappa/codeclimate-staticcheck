@@ -3,7 +3,7 @@ engines:
   staticcheck:
     enabled: true
     config:
-      package_dir: github.com/alexkappa/codeclimate-staticcheck
+      package: github.com/alexkappa/codeclimate-staticcheck
   # fixme:
   #   enabled: true
   # gofmt:
@@ -18,5 +18,5 @@ ratings:
   paths:
     - "**.go"
 exclude_paths:
-  # - "vendor/"
+  - "vendor/"
   - ".wercker/"
