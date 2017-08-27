@@ -31,7 +31,7 @@ release:
     - script:
         name: add user
         code: |
-          adduser -u 9000 -D app
+          useradd -u 9000 app
     - internal/docker-push:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
