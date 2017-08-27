@@ -1,6 +1,6 @@
 {
   "name": "staticcheck",
-  "description": "",
+  "description": "Staticcheck provides static analysis for Go programs, finding all kinds of bugs – crashes as well as incorrect behaviour.",
   "maintainer": {
     "name": "Alex Kalyvitis",
     "email": "alex.kalyvitis@yieldr.com"
