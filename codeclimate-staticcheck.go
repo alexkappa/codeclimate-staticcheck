@@ -24,13 +24,7 @@ func main() {
 	}
 
 	rootPath := "/code"
-
-	pkgPath := filepath.Join(os.Getenv("GOPATH"), "src", "app")
-	if engineConfig, ok := config["config"].(map[string]interface{}); ok {
-		if packageDir, ok := engineConfig["package"].(string); ok {
-			pkgPath = filepath.Join(os.Getenv("GOPATH"), "src", packageDir)
-		}
-	}
+	pkgPath := getPkgPath(config)
 
 	err = copyDir(pkgPath, rootPath)
 	if err != nil {
@@ -68,6 +62,16 @@ func main() {
 			engine.PrintIssue(issue)
 		}
 	}
+}
+
+func getPkgPath(config map[string]interface{}) string {
+	pkgPath := filepath.Join(os.Getenv("GOPATH"), "src", "app")
+	if engineConfig, ok := config["config"].(map[string]interface{}); ok {
+		if pkg, ok := engineConfig["package"].(string); ok {
+			pkgPath = filepath.Join(os.Getenv("GOPATH"), "src", pkg)
+		}
+	}
+	return pkgPath
 }
 
 func check(s string) string {
