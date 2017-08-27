@@ -5,7 +5,9 @@
     "name": "Alex Kalyvitis",
     "email": "alex.kalyvitis@yieldr.com"
   },
-  "languages" : ["Go"],
-  "version": "v1.0.0",
+  "languages": [
+    "Go"
+  ],
+  "version": "0.0.0-8-gec29c0e",
   "spec_version": "0.0.1"
 }

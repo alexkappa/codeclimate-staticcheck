@@ -12,6 +12,13 @@ build:
         code: |
           go test
     - script:
+        name: update engine version
+        code: |
+          apt update
+          apt install jq -yq
+          jq ".version = \"$WERCKER_GIT_COMMIT\"" < engine.json > tmp.engine.json
+          mv tmp.engine.json engine.json
+    - script:
         name: copy files
         code: |
           cp codeclimate-staticcheck $WERCKER_OUTPUT_DIR/
@@ -26,10 +33,13 @@ release:
         code: |
           adduser -u 9000 -D app
     - internal/docker-push:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
         author: Alex Kalyvitis
         cmd: /usr/local/bin/codeclimate-staticcheck
-        registry: https://registry.hub.docker.com
-        repository: yieldr/codeclimate-staticcheck
+        registry: $DOCKER_REGISTRY
+        repository: $DOCKER_REPOSITORY
         user: app
         volumes: /code
         working-dir: /code
+        tag: $WERCKER_GIT_COMMIT, $WERCKER_GIT_BRANCH, latest
