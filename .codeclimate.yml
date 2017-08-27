@@ -4,16 +4,16 @@ engines:
     enabled: true
     config:
       package: github.com/alexkappa/codeclimate-staticcheck
-  # fixme:
-  #   enabled: true
-  # gofmt:
-  #   enabled: true
-  # golint:
-  #   enabled: true
-  #   exclude_paths:
-  #     - "**_test.go"
-  # govet:
-  #   enabled: true
+  fixme:
+    enabled: true
+  gofmt:
+    enabled: true
+  golint:
+    enabled: true
+    exclude_paths:
+      - "**_test.go"
+  govet:
+    enabled: true
 ratings:
   paths:
     - "**.go"
