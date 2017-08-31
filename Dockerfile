@@ -1,6 +1,6 @@
 FROM golang:1.8
 
-MAINTAINER Alex Kalyvitis <alex.kalyvitis@yieldr.com>
+MAINTAINER Alex Kalyvitis <alex.kalyvitis@gmail.com>
 
 WORKDIR /code
 VOLUME /code

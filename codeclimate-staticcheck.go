@@ -34,7 +34,7 @@ func main() {
 
 	os.Chdir(pkgPath)
 
-	pkgs := gotool.ImportPaths([]string{"./..."})
+	pkgs := getPkgs("./...")
 
 	checker := staticcheck.NewChecker()
 	problems, program, err := lintutil.Lint(checker, pkgs, nil)
@@ -72,6 +72,17 @@ func getPkgPath(config map[string]interface{}) string {
 		}
 	}
 	return pkgPath
+}
+
+func getPkgs(s string) (pkgs []string) {
+	allPkgs := gotool.ImportPaths([]string{s})
+	for _, pkg := range allPkgs {
+		isVendor := strings.Contains(pkg, "/vendor/")
+		if !isVendor {
+			pkgs = append(pkgs, pkg)
+		}
+	}
+	return
 }
 
 func check(s string) string {

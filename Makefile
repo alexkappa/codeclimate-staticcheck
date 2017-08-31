@@ -19,3 +19,6 @@ image:
 
 analyze:
 	@codeclimate analyze --dev
+
+benchmark:
+	@time make analyze
