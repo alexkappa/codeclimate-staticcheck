@@ -13,7 +13,6 @@ import (
 	"honnef.co/go/tools/staticcheck"
 
 	"github.com/codeclimate/cc-engine-go/engine"
-	"github.com/kisielk/gotool"
 )
 
 func main() {
@@ -26,6 +25,8 @@ func main() {
 	rootPath := "/code"
 	pkgPath := getPkgPath(config)
 
+	includePaths := engine.IncludePaths(pkgPath, config)
+
 	err = copyDir(pkgPath, rootPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed copying dir to %q. %s\n", pkgPath, err)
@@ -34,7 +35,7 @@ func main() {
 
 	os.Chdir(pkgPath)
 
-	pkgs := getPkgs("./...")
+	pkgs := getPkgs(includePaths)
 
 	checker := staticcheck.NewChecker()
 	problems, program, err := lintutil.Lint(checker, pkgs, nil)
@@ -42,8 +43,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error linting program: %s\n", err)
 		os.Exit(1)
 	}
-
-	includePaths := engine.IncludePaths(pkgPath, config)
 
 	for _, problem := range problems {
 
@@ -74,13 +73,14 @@ func getPkgPath(config map[string]interface{}) string {
 	return pkgPath
 }
 
-func getPkgs(s string) (pkgs []string) {
-	allPkgs := gotool.ImportPaths([]string{s})
-	for _, pkg := range allPkgs {
-		isVendor := strings.Contains(pkg, "/vendor/")
-		if !isVendor {
-			pkgs = append(pkgs, pkg)
-		}
+func getPkgs(paths []string) (pkgs []string) {
+	pkgMap := make(map[string]struct{})
+	for _, path := range paths {
+		pkg := strings.SplitAfter(filepath.Dir(path), filepath.Join(os.Getenv("GOPATH"), "src")+"/")[1]
+		pkgMap[pkg] = struct{}{}
+	}
+	for pkg, _ := range pkgMap {
+		pkgs = append(pkgs, pkg)
 	}
 	return
 }
