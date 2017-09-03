@@ -116,6 +116,9 @@ func copyDir(dst, src string) error {
 		if info.IsDir() {
 			return os.MkdirAll(dstPath, info.Mode())
 		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
 		return copyFile(dstPath, srcPath)
 	}
 	return filepath.Walk(src, walkFn)
